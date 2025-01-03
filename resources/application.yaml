@@ -1,0 +1,20 @@
+app:
+  name: hb-gateway
+  desc: API Gateway Olibs Hybrid
+  port: 8080
+
+datasource:
+  db:
+    driver: postgre
+    host: localhost
+    port: 5432
+    name: crud_rust
+    schema: public
+    username: postgres
+    password: postgres
+    sslmode: disable
+    min_conn: 10
+    max_conn: 100
+    idle_timeout: 100
+    acquire_timeout: 100
+    encrypt: true
