@@ -3,7 +3,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct UserMaster {
     pub userid: String,
     pub branchid: String,
@@ -20,23 +20,6 @@ pub struct UserMaster {
 }
 
 impl UserMaster {
-    pub fn new() -> Self {
-        Self{
-            userid: "".to_string(),
-            branchid: "".to_string(),
-            fullname: "".to_string(),
-            email: "".to_string(),
-            status: 0,
-            flgcbs: false,
-            application: "".to_string(),
-            expdate: Default::default(),
-            created_at: Default::default(),
-            created_by: "".to_string(),
-            updated_at: None,
-            updated_by: None,
-        }
-    }
-
     pub fn row_mapper(row: PgRow) -> Result<Self, sqlx::Error> {
         let user_master = UserMaster{
             userid: row.try_get::<String, &str>("userid")?,

@@ -1,4 +1,4 @@
-mod config;
+mod configs;
 mod handlers;
 mod middlewares;
 mod models;
@@ -9,6 +9,6 @@ mod router;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let app = config::app::App::init().await?;
+    let app = configs::app::App::init().await?;
     app.run().await
 }

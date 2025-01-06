@@ -1,6 +1,6 @@
 use sqlx::{Error, Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
-use crate::config::setting::Setting;
+use crate::configs::setting::Setting;
 
 pub async fn conn(setting: &Setting) -> Result<Pool<Postgres>, Error> {
     let url = format!("{}://{}:{}@{}:{}/{}?search_path={}&sslmode={}",

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use crate::models::dto::user::UserReq;
 use crate::repositories::db::user::UserRepoDb;
-use crate::repositories::user::UserRepo;
 use crate::services::user::UserService;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;

@@ -53,15 +53,15 @@ impl UserRepo for UserRepoDb {
         let result = sqlx::query("INSERT INTO public.user_master
 (userid, fullname, email, status, expdate, created_at, branchid, created_by, application, flgcbs)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
-            .bind(user_master.userid.clone())
-            .bind(user_master.fullname.clone())
-            .bind(user_master.email.clone())
+            .bind(&user_master.userid)
+            .bind(&user_master.fullname)
+            .bind(&user_master.email)
             .bind(user_master.status)
             .bind(user_master.expdate)
             .bind(user_master.created_at)
-            .bind(user_master.branchid.clone())
-            .bind(user_master.created_by.clone())
-            .bind(user_master.application.clone())
+            .bind(&user_master.branchid)
+            .bind(&user_master.created_by)
+            .bind(&user_master.application)
             .bind(user_master.flgcbs)
             .execute(&self.conn).await;
         match result {
@@ -83,14 +83,14 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
         let result = sqlx::query("UPDATE public.user_master
 SET fullname=$2, email=$3, status=$4, expdate=$5, branchid=$6, updated_at=now(), updated_by=$7, application=$8, flgcbs=$9
 WHERE userid=$1")
-            .bind(user_master.userid.as_str())
-            .bind(user_master.fullname.as_str())
-            .bind(user_master.email.as_str())
+            .bind(&user_master.userid)
+            .bind(&user_master.fullname)
+            .bind(&user_master.email)
             .bind(user_master.status)
             .bind(user_master.expdate)
-            .bind(user_master.branchid.as_str())
-            .bind(user_master.updated_by.clone())
-            .bind(user_master.application.as_str())
+            .bind(&user_master.branchid)
+            .bind(&user_master.updated_by)
+            .bind(&user_master.application)
             .bind(user_master.flgcbs)
             .execute(&self.conn).await;
         match result {

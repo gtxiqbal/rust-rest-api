@@ -1,15 +1,11 @@
-use std::{env, io, mem};
+use std::{env, io};
 use std::sync::Arc;
-use std::sync::atomic::AtomicI64;
 use axum::{middleware, Router};
-use axum::middleware::FromFnLayer;
 use log::info;
-use sqlx::{Pool, Postgres};
-use tower::layer::util::Stack;
 use tower::ServiceBuilder;
-use crate::config::setting;
+use crate::configs::setting;
 use crate::handlers::user::UserState;
-use crate::{handlers, middlewares, repositories, router, services, utils};
+use crate::{middlewares, router, utils};
 use crate::repositories::db::user::UserRepoDb;
 use crate::services::user::UserService;
 
@@ -31,7 +27,7 @@ impl App {
 
         utils::messages::init_message().await?;
 
-        let result = crate::config::pg_conn::conn(&setting).await;
+        let result = crate::configs::pg_conn::conn(&setting).await;
         if let Err(err) = result {
             panic!("panic database: {}", err.to_string())
         }

@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::config::setting::{App, Database, Datasource, Setting};
+use crate::configs::setting::{App, Database, Datasource, Setting};
 
 #[derive(Clone, Debug)]
 pub struct CtxApp {
