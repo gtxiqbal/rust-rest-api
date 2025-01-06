@@ -1,9 +1,9 @@
 use crate::models::dto::user::{UserReq, UserRes};
 use chrono::{NaiveDate, NaiveDateTime};
-use sqlx::{FromRow, Row};
 use sqlx::postgres::PgRow;
+use sqlx::Row;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug)]
 pub struct UserMaster {
     pub userid: String,
     pub branchid: String,

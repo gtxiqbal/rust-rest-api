@@ -1,21 +1,23 @@
+use std::sync::Arc;
+use crate::get_message;
 use crate::models::dto::user::{UserReq, UserRes};
 use crate::models::entity::user_master::UserMaster;
-use crate::repositories::user_repo::UserRepo;
+use crate::repositories::user::UserRepo;
 use crate::utils::api_response::ApiResponse;
 use crate::utils::error::ErrorApp;
-use crate::get_message;
-use std::sync::Arc;
 
-#[derive(Clone)]
-pub struct UserService {
-    user_repo : Arc<dyn UserRepo>
+pub struct UserService<U> {
+    user_repo : Arc<U>,
 }
 
-impl UserService {
-    pub fn new(user_repo: Arc<dyn UserRepo>) -> Arc<Self> {
-        Arc::new(Self {
+impl <U> UserService<U>
+where
+    U: UserRepo,
+{
+    pub fn new(user_repo: Arc<U>) -> Self {
+        Self {
             user_repo,
-        })
+        }
     }
 
     pub async fn get_users(&self) -> ApiResponse<Vec<UserRes>> {

@@ -2,6 +2,12 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
+pub struct CountReq {
+    pub count: i64,
+    pub count_loop: i64,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UserReq {
     pub userId: String,
     pub branchId: String,

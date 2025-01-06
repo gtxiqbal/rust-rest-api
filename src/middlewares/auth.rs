@@ -5,7 +5,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 use hyper::StatusCode;
 
-pub async fn auth_middleware(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
+pub async fn auth_check(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
     let mut ctx_app = CTX_APP.get();
     let mut error_auth = ErrorAuth::new();
     let header_map = req.headers();

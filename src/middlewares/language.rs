@@ -5,7 +5,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 use hyper::StatusCode;
 
-pub async fn language_middleware(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
+pub async fn accept_language(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
     let mut ctx_app = CtxApp::new();
     let mut key_languages: HashSet<String> = HashSet::new();
     ctx_app.user_id = "Anonymous".to_string();
