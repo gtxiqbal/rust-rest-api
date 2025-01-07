@@ -1,9 +1,9 @@
 use crate::utils::error::ErrorApp;
-use std::env;
-use std::str::{from_utf8, from_utf8_unchecked, Utf8Error};
-use base64::{DecodeError, Engine};
-use rsa::pkcs1::{DecodeRsaPublicKey, DecodeRsaPrivateKey, EncodeRsaPublicKey, EncodeRsaPrivateKey};
+use base64::Engine;
+use rsa::pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey};
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
+use std::env;
+use std::str::from_utf8;
 
 pub fn generate_rsa_key() {
     let resource_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());

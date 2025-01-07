@@ -4,22 +4,23 @@ use crate::models::entity::user_master::UserMaster;
 use crate::repositories::user::UserRepo;
 use crate::utils::api_response::ApiResponse;
 use crate::utils::error::ErrorApp;
-use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct UserService<U> {
-    user_repo: Arc<U>,
+    user_repo: U,
 }
 
 impl<U> UserService<U>
 where
-    U: UserRepo,
+    U: UserRepo + Clone,
 {
-    pub fn new(user_repo: Arc<U>) -> Self {
+    pub fn new(user_repo: U) -> Self {
         Self { user_repo }
     }
 
     pub async fn get_users(&self) -> ApiResponse<Vec<UserRes>> {
-        let result = self.user_repo.find_all().await;
+        let repo: U = self.user_repo.clone();
+        let result = repo.find_all().await;
         if let Err(err) = result {
             return match err {
                 _ => ApiResponse::failed_internal(err.to_string()),

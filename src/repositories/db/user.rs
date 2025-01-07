@@ -1,11 +1,11 @@
 use crate::models::entity::user_master::UserMaster;
-use crate::repositories::user::UserRepo;
 use crate::utils::context::CTX_APP;
 use crate::utils::error::ErrorApp;
-use async_trait::async_trait;
 use sqlx::error::ErrorKind;
 use sqlx::{Error, Pool, Postgres};
+use crate::repositories::user::UserRepo;
 
+#[derive(Clone)]
 pub struct UserRepoDb {
     conn: Pool<Postgres>,
 }
@@ -16,7 +16,6 @@ impl UserRepoDb {
     }
 }
 
-#[async_trait]
 impl UserRepo for UserRepoDb {
     async fn find_all(&self) -> Result<Vec<UserMaster>, ErrorApp> {
         let result = sqlx::query("select * from user_master")

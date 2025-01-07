@@ -1,8 +1,7 @@
 use crate::models::entity::user_master::UserMaster;
 use crate::utils::error::ErrorApp;
-use async_trait::async_trait;
 
-#[async_trait]
+#[trait_variant::make(UserRepoFactory: Send)]
 pub trait UserRepo: Send + Sync {
     async fn find_all(&self) -> Result<Vec<UserMaster>, ErrorApp>;
     async fn find_by_user_id(&self, user_id: String) -> Result<UserMaster, ErrorApp>;

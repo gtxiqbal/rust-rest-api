@@ -5,12 +5,11 @@ use crate::services::user::UserService;
 use crate::{middlewares, router, utils};
 use axum::{middleware, Router};
 use log::info;
-use std::sync::Arc;
 use std::{env, io};
 use tower::ServiceBuilder;
 
 pub struct App {
-    pub user_state: Arc<UserState>,
+    user_state: UserState,
 }
 
 impl App {
@@ -35,13 +34,13 @@ impl App {
         let conn = result.unwrap();
 
         //repositories
-        let user_repo = Arc::new(UserRepoDb::new(conn));
+        let user_repo = UserRepoDb::new(conn);
 
         //services
-        let user_service = Arc::new(UserService::new(user_repo));
+        let user_service = UserService::new(user_repo);
 
         //states
-        let user_state = Arc::new(UserState::new(user_service));
+        let user_state = UserState {user_service};
 
         Ok(Self { user_state })
     }
@@ -60,7 +59,7 @@ impl App {
     fn init_route(&self) -> Router {
         Router::new().nest(
             "/api/v1/users",
-            router::user::user(Arc::clone(&self.user_state)),
+            router::user::user(self.user_state.clone()),
         )
     }
 
