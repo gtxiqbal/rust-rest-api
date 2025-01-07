@@ -30,7 +30,7 @@ pub async fn auth_check(req: Request, next: Next) -> Result<Response, (StatusCod
         }
 
         ctx_app.user_id = token.to_string();
-        return Ok(CTX_APP.scope(ctx_app, next.run(req)).await)
+        return Ok(CTX_APP.scope(ctx_app, next.run(req)).await);
     }
 
     error_auth.error = "missing_token".to_string();

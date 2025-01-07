@@ -3,9 +3,9 @@ mod handlers;
 mod middlewares;
 mod models;
 mod repositories;
+mod router;
 mod services;
 mod utils;
-mod router;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

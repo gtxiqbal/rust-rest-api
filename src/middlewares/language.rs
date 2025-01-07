@@ -1,12 +1,12 @@
-use std::collections::HashSet;
 use crate::utils::context::{CtxApp, CTX_APP};
 use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
 use hyper::StatusCode;
+use std::collections::HashSet;
 
 pub async fn accept_language(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
-    let mut ctx_app = CtxApp::new();
+    let mut ctx_app = CtxApp::default();
     let mut key_languages: HashSet<String> = HashSet::new();
     ctx_app.user_id = "Anonymous".to_string();
 

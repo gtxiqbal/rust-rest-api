@@ -1,20 +1,20 @@
-use std::{env, io};
-use std::sync::Arc;
-use axum::{middleware, Router};
-use log::info;
-use tower::ServiceBuilder;
 use crate::configs::setting;
 use crate::handlers::user::UserState;
-use crate::{middlewares, router, utils};
 use crate::repositories::db::user::UserRepoDb;
 use crate::services::user::UserService;
+use crate::{middlewares, router, utils};
+use axum::{middleware, Router};
+use log::info;
+use std::sync::Arc;
+use std::{env, io};
+use tower::ServiceBuilder;
 
 pub struct App {
-    pub user_state: Arc<UserState>
+    pub user_state: Arc<UserState>,
 }
 
 impl App {
-    pub async fn init() ->  io::Result<Self>{
+    pub async fn init() -> io::Result<Self> {
         let result = setting::Setting::new();
         if let Err(err) = result {
             panic!("panic load setting: {}", err.to_string())
@@ -23,11 +23,11 @@ impl App {
         let resources_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
         log4rs::init_file(format!("{resources_path}/log4rs.yaml"), Default::default()).unwrap();
 
-        let setting = result.unwrap();
+        let mut setting = result.unwrap();
 
         utils::messages::init_message().await?;
 
-        let result = crate::configs::pg_conn::conn(&setting).await;
+        let result = crate::configs::pg_conn::conn(&mut setting).await;
         if let Err(err) = result {
             panic!("panic database: {}", err.to_string())
         }
@@ -43,7 +43,7 @@ impl App {
         //states
         let user_state = Arc::new(UserState::new(user_service));
 
-        Ok(Self{ user_state })
+        Ok(Self { user_state })
     }
 
     pub async fn run(&self) -> io::Result<()> {
@@ -58,8 +58,10 @@ impl App {
     }
 
     fn init_route(&self) -> Router {
-        Router::new()
-            .nest("/api/v1/users", router::user::user(Arc::clone(&self.user_state)))
+        Router::new().nest(
+            "/api/v1/users",
+            router::user::user(Arc::clone(&self.user_state)),
+        )
     }
 
     fn init_layer(&self, router: Router) -> Router {
@@ -67,7 +69,7 @@ impl App {
             ServiceBuilder::new()
                 .layer(middleware::from_fn(middlewares::language::accept_language))
                 .layer(middleware::from_fn(middlewares::auth::auth_check))
-                .layer(middleware::from_fn(middlewares::log::stdout::log_write))
+                .layer(middleware::from_fn(middlewares::log::stdout::log_write)),
         )
     }
 }

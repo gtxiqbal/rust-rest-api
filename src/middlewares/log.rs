@@ -4,7 +4,7 @@ use bytes::Bytes;
 use http_body::Body;
 use hyper::StatusCode;
 
-pub mod stdout{
+pub mod stdout {
     use crate::middlewares::log::convert_to_bytes;
     use crate::utils::context::CTX_APP;
     use axum::extract::Request;
@@ -39,7 +39,7 @@ pub mod stdout{
     }
 
     fn write_log(type_log: &str, bytes: &Bytes) {
-        let result= serde_json::from_slice::<serde_json::Value>(&bytes.to_vec());
+        let result = serde_json::from_slice::<serde_json::Value>(&bytes.to_vec());
         if let Ok(json) = result {
             info!("{type_log}: {}", serde_json::to_string(&json).unwrap())
         }

@@ -11,7 +11,7 @@ datasource:
     name: crud_rust
     schema: public
     username: postgres
-    password: postgres
+    password: uhRainea3tzsvWRS792FwAOGDdrYYEXY/Gf31hDE+kaKKridof3/UTuWaPoLuwRelIbUybs1tYZJFkU0eRAnADlnqutn6uj4VpTOfVf3XbnIZ1OhDNj8MnWJEejisf3Bj6wJM/OUJpCDLBEUjvgpsqGGbAsF2rtg0yKN3YI89EwfrYkUzJYMAvIXwYe3jDcp8ZuYLwoSJheeMmy+9ESBDG4kyjT91rRWERq8Qzg2nQw0Z5vJ93XmdroQTNMGbK+GGFZOgLDs/NSIMdob1Z8JvuoPrZso634iNNwhZqY2F5Q4v+WTHk6ffJUpzfcHbLE62ykHKsPCgYfjVksBdg1FKQ
     sslmode: disable
     min_conn: 10
     max_conn: 100

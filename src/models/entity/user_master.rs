@@ -21,7 +21,7 @@ pub struct UserMaster {
 
 impl UserMaster {
     pub fn row_mapper(row: PgRow) -> Result<Self, sqlx::Error> {
-        let user_master = UserMaster{
+        let user_master = UserMaster {
             userid: row.try_get::<String, &str>("userid")?,
             branchid: row.try_get::<String, _>("branchid")?,
             fullname: row.try_get::<String, _>("fullname")?,
@@ -38,8 +38,8 @@ impl UserMaster {
         Ok(user_master)
     }
 
-    pub fn from_user_req(user_req: UserReq) -> Self{
-        Self{
+    pub fn from_user_req(user_req: UserReq) -> Self {
+        Self {
             userid: user_req.userId,
             branchid: user_req.branchId,
             fullname: user_req.fullName,

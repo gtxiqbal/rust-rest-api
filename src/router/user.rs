@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use axum::Router;
-use axum::routing::{delete, get, post, put};
 use crate::handlers;
 use crate::handlers::user::UserState;
+use axum::routing::{delete, get, post, put};
+use axum::Router;
+use std::sync::Arc;
 
 pub fn user(user_state: Arc<UserState>) -> Router {
     Router::new()

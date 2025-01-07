@@ -12,7 +12,7 @@ pub struct UserRepoDb {
 
 impl UserRepoDb {
     pub fn new(conn: Pool<Postgres>) -> Self {
-        Self {conn}
+        Self { conn }
     }
 }
 
@@ -27,7 +27,7 @@ impl UserRepo for UserRepoDb {
         match result {
             Ok(result) => Ok(result),
             Err(err) => Err(match err {
-                _ => ErrorApp::OtherErrorDB(err)
+                _ => ErrorApp::OtherErr(err.to_string()),
             }),
         }
     }
@@ -43,38 +43,39 @@ impl UserRepo for UserRepoDb {
             Ok(result) => Ok(result),
             Err(err) => Err(match err {
                 Error::RowNotFound => ErrorApp::RowNotFound,
-                _ => ErrorApp::OtherErrorDB(err)
+                _ => ErrorApp::OtherErr(err.to_string()),
             }),
         }
     }
 
     async fn create(&self, user_master: &mut UserMaster) -> Result<(), ErrorApp> {
         user_master.created_by = CTX_APP.get().user_id;
-        let result = sqlx::query("INSERT INTO public.user_master
+        let result = sqlx::query(
+            "INSERT INTO public.user_master
 (userid, fullname, email, status, expdate, created_at, branchid, created_by, application, flgcbs)
-VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
-            .bind(&user_master.userid)
-            .bind(&user_master.fullname)
-            .bind(&user_master.email)
-            .bind(user_master.status)
-            .bind(user_master.expdate)
-            .bind(user_master.created_at)
-            .bind(&user_master.branchid)
-            .bind(&user_master.created_by)
-            .bind(&user_master.application)
-            .bind(user_master.flgcbs)
-            .execute(&self.conn).await;
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        )
+        .bind(&user_master.userid)
+        .bind(&user_master.fullname)
+        .bind(&user_master.email)
+        .bind(user_master.status)
+        .bind(user_master.expdate)
+        .bind(user_master.created_at)
+        .bind(&user_master.branchid)
+        .bind(&user_master.created_by)
+        .bind(&user_master.application)
+        .bind(user_master.flgcbs)
+        .execute(&self.conn)
+        .await;
         match result {
             Ok(_) => Ok(()),
-            Err(err) => {Err(match err {
-                Error::Database(err_db) => {
-                    match err_db.kind() {
-                        ErrorKind::UniqueViolation => ErrorApp::DuplicateKey,
-                        _ => ErrorApp::OtherErr(err_db.to_string())
-                    }
+            Err(err) => Err(match err {
+                Error::Database(err_db) => match err_db.kind() {
+                    ErrorKind::UniqueViolation => ErrorApp::DuplicateKey,
+                    _ => ErrorApp::OtherErr(err_db.to_string()),
                 },
-                _ => ErrorApp::OtherErrorDB(err),
-            })}
+                _ => ErrorApp::OtherErr(err.to_string()),
+            }),
         }
     }
 
@@ -100,8 +101,8 @@ WHERE userid=$1")
                 } else {
                     Ok(())
                 }
-            },
-            Err(err) => Err(ErrorApp::OtherErrorDB(err))
+            }
+            Err(err) => Err(ErrorApp::OtherErr(err.to_string())),
         }
     }
 
@@ -119,7 +120,7 @@ WHERE userid=$1")
                     Ok(())
                 }
             }
-            Err(err) => Err(ErrorApp::OtherErrorDB(err))
+            Err(err) => Err(ErrorApp::OtherErr(err.to_string())),
         }
     }
 }

@@ -11,13 +11,13 @@ pub struct ApiResponse<T> {
     pub data: Option<T>,
 }
 
-impl <T> ApiResponse<T>
+impl<T> ApiResponse<T>
 where
     (StatusCode, Json<ApiResponse<T>>): IntoResponse,
-    T: Serialize
+    T: Serialize,
 {
     pub fn failed_from<V>(resp: ApiResponse<V>) -> ApiResponse<T> {
-        Self{
+        Self {
             code: resp.code,
             status: resp.status,
             message: resp.message,
@@ -30,7 +30,7 @@ where
     }
 
     pub fn failed_with_code(code: String, message: String) -> ApiResponse<T> {
-        Self{
+        Self {
             code,
             status: "FAILED".to_string(),
             message,
@@ -39,7 +39,7 @@ where
     }
 
     pub fn success(message: String, data: T) -> ApiResponse<T> {
-        Self{
+        Self {
             code: "00".to_string(),
             status: "SUCCESS".to_string(),
             message,

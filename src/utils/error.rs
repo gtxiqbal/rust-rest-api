@@ -11,9 +11,6 @@ pub enum ErrorApp {
     DuplicateKey,
 
     #[error("error: {0}")]
-    OtherErrorDB(#[from] sqlx::Error),
-
-    #[error("error: {0}")]
     OtherErr(String),
 }
 
@@ -26,7 +23,7 @@ pub struct ErrorAuth {
 
 impl ErrorAuth {
     pub fn new() -> Self {
-        Self{
+        Self {
             error: "".to_string(),
             error_description: None,
             error_uri: None,
@@ -36,7 +33,7 @@ impl ErrorAuth {
     pub fn into_json(self) -> (StatusCode, String) {
         let result = serde_json::to_string(&self).unwrap();
         if self.error.eq("invalid_token") {
-            return (StatusCode::UNAUTHORIZED, result)
+            return (StatusCode::UNAUTHORIZED, result);
         }
         (StatusCode::BAD_REQUEST, result)
     }

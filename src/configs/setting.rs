@@ -2,15 +2,15 @@ use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 use std::env;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
 pub struct App {
     pub name: String,
     pub desc: String,
-    pub port: i16
+    pub port: i16,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
 pub struct Database {
     pub driver: String,
@@ -25,16 +25,16 @@ pub struct Database {
     pub max_conn: i16,
     pub idle_timeout: i16,
     pub acquire_timeout: i16,
-    pub encrypt: bool
+    pub encrypt: bool,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
 pub struct Datasource {
-    pub db: Database
+    pub db: Database,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
 pub struct Setting {
     pub app: App,
