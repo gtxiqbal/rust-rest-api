@@ -1,12 +1,12 @@
+use crate::configs::get_resources;
 use crate::utils::error::ErrorApp;
 use base64::Engine;
 use rsa::pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey};
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
-use std::env;
 use std::str::from_utf8;
 
 pub fn generate_rsa_key() {
-    let resource_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
+    let resource_path = get_resources();
     let mut rnd = rand::thread_rng();
     let priv_key = RsaPrivateKey::new(&mut rnd, 2048).unwrap();
     priv_key.write_pkcs1_der_file(format!("{resource_path}/private")).unwrap();
@@ -16,7 +16,7 @@ pub fn generate_rsa_key() {
 }
 
 pub fn encrypt(data: &str) -> Result<String, ErrorApp> {
-    let resource_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
+    let resource_path = get_resources();
     let pub_key = match RsaPublicKey::read_pkcs1_der_file(format!("{resource_path}/public")) {
         Ok(result) => result,
         Err(err) => {
@@ -41,7 +41,7 @@ pub fn decrypt(data: &str) -> Result<String, ErrorApp> {
         Err(err) => return Err(ErrorApp::OtherErr(err.to_string())),
     };
 
-    let resource_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
+    let resource_path = get_resources();
     let priv_key = match RsaPrivateKey::read_pkcs1_der_file(format!("{resource_path}/private")) {
         Ok(result) => result,
         Err(err) => return Err(ErrorApp::OtherErr(err.to_string())),

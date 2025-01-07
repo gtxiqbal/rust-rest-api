@@ -1,11 +1,10 @@
-use crate::configs::setting;
 use crate::handlers::user::UserState;
 use crate::repositories::db::user::UserRepoDb;
 use crate::services::user::UserService;
-use crate::{middlewares, router, utils};
+use crate::{configs, middlewares, router, utils};
 use axum::{middleware, Router};
 use log::info;
-use std::{env, io};
+use std::io;
 use tower::ServiceBuilder;
 
 pub struct App {
@@ -14,19 +13,18 @@ pub struct App {
 
 impl App {
     pub async fn init() -> io::Result<Self> {
-        let result = setting::Setting::new();
+        let result = configs::setting::Setting::new();
         if let Err(err) = result {
             panic!("panic load setting: {}", err.to_string())
         }
 
-        let resources_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
-        log4rs::init_file(format!("{resources_path}/log4rs.yaml"), Default::default()).unwrap();
+        configs::log::init_logging();
 
         let mut setting = result.unwrap();
 
         utils::messages::init_message().await?;
 
-        let result = crate::configs::pg_conn::conn(&mut setting).await;
+        let result = configs::pg_conn::conn(&mut setting).await;
         if let Err(err) = result {
             panic!("panic database: {}", err.to_string())
         }

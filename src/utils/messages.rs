@@ -2,6 +2,7 @@ use crate::utils::context::CTX_APP;
 use std::{env, io};
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
+use crate::configs::get_resources;
 
 #[macro_export]
 macro_rules! get_message {
@@ -13,7 +14,7 @@ macro_rules! get_message {
             let arg = format!("{}", arg);
             args.push(arg.as_str());
         }
-        let args = &args[1..args.len()];
+        let args = args.as_slice();
         let message = crate::utils::messages::get_message($key, args);
         format!("{message}")
     }};
@@ -26,8 +27,9 @@ macro_rules! get_message {
             let arg = format!("{}", $args);
             args.push(arg.as_str());
         )*
+
         let key = args[0];
-        let args = &args[1..args.len()];
+        let args = args.as_slice();
         let message = crate::utils::messages::get_message(key, args);
         format!("{message}")
     }};
@@ -63,7 +65,7 @@ fn get_message_default(prefix: &str, key: &str, arr: &[&str]) -> String {
 }
 
 pub async fn init_message() -> io::Result<()> {
-    let resources_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
+    let resources_path = get_resources();
     let mut read_dir = tokio::fs::read_dir(&resources_path).await?;
     while let Some(dir_entry) = read_dir.next_entry().await? {
         let file_type = dir_entry.file_type().await?;

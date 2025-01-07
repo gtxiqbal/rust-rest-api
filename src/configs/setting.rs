@@ -1,6 +1,7 @@
 use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 use std::env;
+use crate::configs::get_resources;
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
@@ -43,7 +44,7 @@ pub struct Setting {
 
 impl Setting {
     pub fn new() -> Result<Self, ConfigError> {
-        let resources_path = env::var("RESOURCES_PATH").unwrap_or("resources".to_string());
+        let resources_path = get_resources();
         let path_config = format!("{resources_path}/application");
 
         let mut file_name = format!("{path_config}.yaml");
