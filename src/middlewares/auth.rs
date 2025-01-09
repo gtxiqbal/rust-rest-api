@@ -4,6 +4,7 @@ use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
 use hyper::StatusCode;
+use log::info;
 
 pub async fn auth_check(req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
     let mut ctx_app = CTX_APP.get();
@@ -27,6 +28,15 @@ pub async fn auth_check(req: Request, next: Next) -> Result<Response, (StatusCod
         if !token.trim().eq("s9999") {
             error_auth.error = "invalid_token".to_string();
             return Err(error_auth.into_json());
+        }
+
+        let mut router = matchit::Router::new();
+        let _ = router.insert("/api/v1/user{*many}", true);
+
+        let path = req.uri().path_and_query().unwrap().as_str();
+        if let Err(err) = router.at(path) {
+            info!("{}", err.to_string());
+            return Err((StatusCode::FORBIDDEN, "".to_string()))
         }
 
         ctx_app.user_id = token.to_string();
