@@ -6,7 +6,8 @@ use sqlx::{Pool, Postgres};
 
 pub async fn conn(setting: &mut Setting) -> Result<Pool<Postgres>, ErrorApp> {
     if setting.datasource.db.encrypt {
-        setting.datasource.db.password =  rsa_crypt::decrypt(setting.datasource.db.password.as_str())?;
+        setting.datasource.db.password =
+            rsa_crypt::decrypt(setting.datasource.db.password.as_str())?;
     }
     let url = format!(
         "{}://{}:{}@{}:{}/{}?search_path={}&sslmode={}",
@@ -30,8 +31,9 @@ pub async fn conn(setting: &mut Setting) -> Result<Pool<Postgres>, ErrorApp> {
             setting.datasource.db.idle_timeout as u64,
         ))
         .connect(&url)
-        .await {
+        .await
+    {
         Ok(result) => Ok(result),
-        Err(err) => Err(ErrorApp::OtherErr(err.to_string()))
+        Err(err) => Err(ErrorApp::OtherErr(err.to_string())),
     }
 }

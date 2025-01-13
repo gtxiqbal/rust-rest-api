@@ -1,18 +1,19 @@
 use crate::models::entity::user_master::UserMaster;
+use crate::repositories::user::UserRepo;
 use crate::utils::context::CTX_APP;
 use crate::utils::error::ErrorApp;
 use sqlx::error::ErrorKind;
 use sqlx::{Error, Pool, Postgres};
-use crate::repositories::user::UserRepo;
+use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UserRepoDb {
     conn: Pool<Postgres>,
 }
 
 impl UserRepoDb {
-    pub fn new(conn: Pool<Postgres>) -> Self {
-        Self { conn }
+    pub fn new(conn: Pool<Postgres>) -> Arc<Self> {
+        Arc::new(Self { conn })
     }
 }
 
@@ -25,9 +26,7 @@ impl UserRepo for UserRepoDb {
 
         match result {
             Ok(result) => Ok(result),
-            Err(err) => Err(match err {
-                _ => ErrorApp::OtherErr(err.to_string()),
-            }),
+            Err(err) => Err(ErrorApp::OtherErr(err.to_string())),
         }
     }
 

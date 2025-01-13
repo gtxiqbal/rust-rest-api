@@ -5,10 +5,11 @@ use crate::{configs, middlewares, router, utils};
 use axum::{middleware, Router};
 use log::info;
 use std::io;
+use std::sync::Arc;
 use tower::ServiceBuilder;
 
 pub struct App {
-    user_state: UserState,
+    user_state: Arc<UserState>,
 }
 
 impl App {
@@ -18,7 +19,7 @@ impl App {
             panic!("panic load setting: {}", err.to_string())
         }
 
-        configs::log::init_logging();
+        configs::logging::init_logging();
 
         let mut setting = result.unwrap();
 
@@ -38,9 +39,9 @@ impl App {
         let user_service = UserService::new(user_repo);
 
         //states
-        let user_state = UserState {user_service};
+        let user_state = UserState { user_service };
 
-        Ok(Self { user_state })
+        Ok(Self { user_state: Arc::new(user_state) })
     }
 
     pub async fn run(&self) -> io::Result<()> {
@@ -55,10 +56,7 @@ impl App {
     }
 
     fn init_route(&self) -> Router {
-        Router::new().nest(
-            "/api/v1/users",
-            router::user::user(self.user_state.clone()),
-        )
+        Router::new().nest("/api/v1/users", router::user::user(Arc::clone(&self.user_state)))
     }
 
     fn init_layer(&self, router: Router) -> Router {
@@ -66,7 +64,7 @@ impl App {
             ServiceBuilder::new()
                 .layer(middleware::from_fn(middlewares::language::accept_language))
                 .layer(middleware::from_fn(middlewares::auth::auth_check))
-                .layer(middleware::from_fn(middlewares::log::stdout::log_write)),
+                .layer(middleware::from_fn(middlewares::logging::stdout::log_write)),
         )
     }
 }

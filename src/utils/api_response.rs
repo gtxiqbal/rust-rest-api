@@ -16,7 +16,10 @@ where
     (StatusCode, Json<ApiResponse<T>>): IntoResponse,
     T: Serialize,
 {
-    pub fn failed_from<V>(resp: ApiResponse<V>) -> ApiResponse<T> {
+    pub fn failed_from<V>(resp: ApiResponse<V>) -> ApiResponse<T>
+    where
+        V: Serialize,
+    {
         Self {
             code: resp.code,
             status: resp.status,
@@ -56,12 +59,10 @@ where
             (StatusCode::OK, Json(self))
         } else if self.code.eq("93") {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(self))
+        } else if self.status.eq("NODATA") {
+            (StatusCode::NOT_FOUND, Json(self))
         } else {
-            if self.status.eq("NODATA") {
-                (StatusCode::NOT_FOUND, Json(self))
-            } else {
-                (StatusCode::BAD_REQUEST, Json(self))
-            }
+            (StatusCode::BAD_REQUEST, Json(self))
         }
     }
 
@@ -71,12 +72,10 @@ where
             (StatusCode::OK, result)
         } else if self.code.eq("93") {
             (StatusCode::INTERNAL_SERVER_ERROR, result)
+        } else if self.status.eq("NODATA") {
+            (StatusCode::NOT_FOUND, result)
         } else {
-            if self.status.eq("NODATA") {
-                (StatusCode::NOT_FOUND, result)
-            } else {
-                (StatusCode::BAD_REQUEST, result)
-            }
+            (StatusCode::BAD_REQUEST, result)
         }
     }
 }

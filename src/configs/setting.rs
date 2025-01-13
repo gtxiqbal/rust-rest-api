@@ -1,7 +1,7 @@
+use crate::configs::get_resources;
 use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 use std::env;
-use crate::configs::get_resources;
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[allow(unused)]
@@ -49,7 +49,7 @@ impl Setting {
 
         let mut file_name = format!("{path_config}.yaml");
         if let Ok(run_mode) = env::var("RUN_MODE") {
-            if !run_mode.trim().eq("") && !run_mode.trim().eq("local") {
+            if !run_mode.trim().is_empty() && !run_mode.trim().eq("local") {
                 let run_mode = run_mode.split(",").collect::<Vec<&str>>();
                 file_name = format!("{path_config}-{}.yaml", run_mode.join("-"))
             }

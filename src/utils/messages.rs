@@ -1,9 +1,10 @@
+use crate::configs::get_resources;
 use crate::utils::context::CTX_APP;
 use std::{env, io};
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use crate::configs::get_resources;
 
+#[allow(clippy::crate_in_macro_def)]
 #[macro_export]
 macro_rules! get_message {
     // array argument
@@ -35,28 +36,28 @@ macro_rules! get_message {
     }};
 }
 
-pub fn get_message(key: &str, arr: &[&str]) -> String {
+pub fn get_message(key: &str, arrs: &[&str]) -> String {
     let ctx = CTX_APP.get();
     for accept_language in ctx.accept_languages {
         let prefix_key = format!("{accept_language}.{key}");
-        if let Ok(mut result) = env::var(prefix_key.clone()) {
-            for i in 0..arr.len() {
+        if let Ok(mut result) = env::var(prefix_key.as_str()) {
+            for (i, arr) in arrs.iter().enumerate() {
                 let arg = format!("{{{}}}", i);
-                result = result.replace(arg.as_str(), arr[i]);
+                result = result.replace(arg.as_str(), arr);
             }
             return result;
         };
     }
-    get_message_default("id", key, arr)
+    get_message_default("id", key, arrs)
 }
 
-fn get_message_default(prefix: &str, key: &str, arr: &[&str]) -> String {
+fn get_message_default(prefix: &str, key: &str, arrs: &[&str]) -> String {
     let prefix_key = format!("{prefix}.{key}");
     match env::var(prefix_key.clone()) {
         Ok(mut result) => {
-            for i in 0..arr.len() {
+            for (i, arr) in arrs.iter().enumerate() {
                 let arg = format!("{{{}}}", i);
-                result = result.replace(arg.as_str(), arr[i]);
+                result = result.replace(arg.as_str(), arr);
             }
             result
         }
@@ -78,11 +79,11 @@ pub async fn init_message() -> io::Result<()> {
                 let readers = BufReader::new(file);
                 let mut lines = readers.lines();
                 while let Some(line) = lines.next_line().await? {
-                    if line.eq("") || line.starts_with("#") {
+                    if line.is_empty() || line.starts_with("#") {
                         continue;
                     }
                     let (key, value) = line.split_once("=").unwrap();
-                    env::set_var(format!("{}.{}", prefix, key.to_string()), value.to_string());
+                    env::set_var(format!("{}.{}", prefix, key), value);
                 }
             }
         }

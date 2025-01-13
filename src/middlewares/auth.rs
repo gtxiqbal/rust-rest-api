@@ -36,7 +36,7 @@ pub async fn auth_check(req: Request, next: Next) -> Result<Response, (StatusCod
         let path = req.uri().path_and_query().unwrap().as_str();
         if let Err(err) = router.at(path) {
             info!("{}", err.to_string());
-            return Err((StatusCode::FORBIDDEN, "".to_string()))
+            return Err((StatusCode::FORBIDDEN, "".to_string()));
         }
 
         ctx_app.user_id = token.to_string();
