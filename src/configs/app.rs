@@ -6,10 +6,12 @@ use axum::{middleware, Router};
 use log::info;
 use std::io;
 use std::sync::Arc;
+use sqlx::{Pool, Postgres};
 use tower::ServiceBuilder;
 
 pub struct App {
     user_state: Arc<UserState>,
+    db: Pool<Postgres>
 }
 
 impl App {
@@ -33,7 +35,7 @@ impl App {
         let conn = result.unwrap();
 
         //repositories
-        let user_repo = UserRepoDb::new(conn);
+        let user_repo = UserRepoDb::new();
 
         //services
         let user_service = UserService::new(user_repo);
@@ -41,7 +43,10 @@ impl App {
         //states
         let user_state = UserState { user_service };
 
-        Ok(Self { user_state: Arc::new(user_state) })
+        Ok(Self { 
+            user_state: Arc::new(user_state),
+            db: conn.clone(),
+        })
     }
 
     pub async fn run(&self) -> io::Result<()> {
@@ -63,6 +68,7 @@ impl App {
         router.layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(middlewares::language::accept_language))
+                .layer(middleware::from_fn_with_state(self.db.clone(), middlewares::db::inject))
                 .layer(middleware::from_fn(middlewares::auth::auth_check))
                 .layer(middleware::from_fn(middlewares::logging::stdout::log_write)),
         )

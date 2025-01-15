@@ -1,5 +1,8 @@
 use crate::configs::setting::Setting;
+use sqlx::{Pool, Postgres};
 use std::collections::HashSet;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Clone, Debug, Default)]
 pub struct CtxApp {
@@ -7,6 +10,16 @@ pub struct CtxApp {
     pub user_id: String,
     pub setting: Setting,
 }
+
+#[derive(Clone)]
+pub struct TxManager {
+    pub db: Pool<Postgres>,
+    pub tx: Arc<Mutex<Option<sqlx::Transaction<'static, Postgres>>>>,
+    pub is_tx: bool,
+}
+
+
 tokio::task_local! {
     pub static CTX_APP: CtxApp;
+    pub static TX_MANAGER: TxManager
 }

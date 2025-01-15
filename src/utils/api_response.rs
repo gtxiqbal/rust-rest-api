@@ -2,6 +2,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Serialize;
+use crate::utils::error::ErrorApp;
 
 #[derive(Serialize)]
 pub struct ApiResponse<T> {
@@ -77,5 +78,14 @@ where
         } else {
             (StatusCode::BAD_REQUEST, result)
         }
+    }
+    
+    pub fn response_from(result_response: Result<ApiResponse<T>, ErrorApp>) -> ApiResponse<T> {
+        result_response.unwrap_or_else(|err| {
+            match err {
+                ErrorApp::WithCode(code, message) => Self::failed_with_code(code, message),
+                _ => Self::failed_internal(err.to_string()),
+            }
+        })
     }
 }

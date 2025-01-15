@@ -4,6 +4,7 @@ use crate::models::entity::user_master::UserMaster;
 use crate::repositories::user::UserRepo;
 use crate::utils::api_response::ApiResponse;
 use crate::utils::error::ErrorApp;
+use rust_rest_api::transaction;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -48,21 +49,21 @@ where
         ApiResponse::success(get_message!("user.get.retrieve.success"), user_res)
     }
 
-    pub async fn create(&self, req: UserReq) -> ApiResponse<()> {
+    #[transaction]
+    pub async fn create(&self, req: UserReq) -> Result<ApiResponse<()>, ErrorApp> {
         let result = self
             .user_repo
             .create(&mut UserMaster::from_user_req(req))
             .await;
-        match result {
-            Ok(_) => ApiResponse::success(get_message!("user.create.success"), ()),
-            Err(err) => match err {
-                ErrorApp::DuplicateKey => ApiResponse::failed_with_code(
-                    "99".to_string(),
-                    get_message!("user.get.already.exists"),
-                ),
-                _ => ApiResponse::failed_internal(err.to_string()),
-            },
+        
+        if let Err(err) =  result{ 
+            return Err(match err {
+                ErrorApp::DuplicateKey => ErrorApp::WithCode("99".to_string(), get_message!("user.get.already.exists")),
+                _ => ErrorApp::OtherErr(err.to_string()),
+            });
         }
+
+        Ok(ApiResponse::success(get_message!("user.create.success"), ()))
     }
 
     pub async fn update(&self, req: UserReq) -> ApiResponse<()> {

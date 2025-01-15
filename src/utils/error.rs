@@ -12,6 +12,9 @@ pub enum ErrorApp {
 
     #[error("error: {0}")]
     OtherErr(String),
+
+    #[error("{1}")]
+    WithCode(String, String)
 }
 
 #[derive(Clone, Serialize)]

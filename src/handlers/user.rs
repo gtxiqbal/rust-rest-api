@@ -5,6 +5,7 @@ use axum::extract::{Path, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use std::sync::Arc;
+use crate::utils::api_response::ApiResponse;
 
 #[derive(Clone, Debug)]
 pub struct UserState {
@@ -30,7 +31,8 @@ pub async fn created_user(
     State(user_state): State<Arc<UserState>>,
     Json(req): Json<UserReq>,
 ) -> impl IntoResponse {
-    user_state.user_service.create(req).await.into_response()
+    let result = user_state.user_service.create(req).await;
+    ApiResponse::response_from(result).into_response()
 }
 
 pub async fn updated_user(
