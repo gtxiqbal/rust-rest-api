@@ -13,7 +13,7 @@ pub enum ErrorApp {
     #[error("error: {0}")]
     OtherErr(String),
 
-    #[error("{1}")]
+    #[error("{0} - {1}")]
     WithCode(String, String)
 }
 
