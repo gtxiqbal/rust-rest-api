@@ -8,7 +8,6 @@ use tokio::sync::Mutex;
 pub struct CtxApp {
     pub accept_languages: HashSet<String>,
     pub user_id: String,
-    pub setting: Setting,
 }
 
 #[derive(Clone)]
@@ -21,5 +20,6 @@ pub struct TxManager {
 
 tokio::task_local! {
     pub static CTX_APP: CtxApp;
-    pub static TX_MANAGER: TxManager
+    pub static TX_MANAGER: TxManager;
+    pub static SETTING: Setting;
 }

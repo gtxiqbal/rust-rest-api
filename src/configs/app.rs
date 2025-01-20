@@ -5,12 +5,12 @@ use crate::{configs, middlewares, router, utils};
 use axum::{middleware, Router};
 use log::info;
 use std::io;
-use std::sync::Arc;
 use sqlx::{Pool, Postgres};
+use tokio::signal;
 use tower::ServiceBuilder;
 
 pub struct App {
-    user_state: Arc<UserState>,
+    user_state: UserState,
     db: Pool<Postgres>
 }
 
@@ -27,7 +27,7 @@ impl App {
 
         utils::messages::init_message().await?;
 
-        let result = configs::pg_conn::conn(&mut setting).await;
+        let result = configs::db::init_pg(&mut setting).await;
         if let Err(err) = result {
             panic!("panic database: {}", err.to_string())
         }
@@ -44,7 +44,7 @@ impl App {
         let user_state = UserState { user_service };
 
         Ok(Self { 
-            user_state: Arc::new(user_state),
+            user_state: user_state,
             db: conn.clone(),
         })
     }
@@ -57,11 +57,11 @@ impl App {
         let port = 8080;
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
         info!("start server on port {}", port);
-        axum::serve(listener, app).await
+        axum::serve(listener, app).with_graceful_shutdown(Self::shutdown_signal()).await
     }
 
     fn init_route(&self) -> Router {
-        Router::new().nest("/api/v1/users", router::user::user(Arc::clone(&self.user_state)))
+        Router::new().nest("/api/v1/users", router::user::user(self.user_state.clone()))
     }
 
     fn init_layer(&self, router: Router) -> Router {
@@ -72,5 +72,29 @@ impl App {
                 .layer(middleware::from_fn(middlewares::auth::auth_check))
                 .layer(middleware::from_fn(middlewares::logging::stdout::log_write)),
         )
+    }
+
+    async fn shutdown_signal() {
+        let ctrl_c = async {
+            signal::ctrl_c()
+                .await
+                .expect("failed to install Ctrl+C handler");
+        };
+
+        #[cfg(unix)]
+        let terminate = async {
+            signal::unix::signal(signal::unix::SignalKind::terminate())
+                .expect("failed to install signal handler")
+                .recv()
+                .await;
+        };
+
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+        
+        tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
     }
 }

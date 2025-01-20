@@ -1,54 +1,77 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, FnArg, ItemFn, Pat, PatType};
+use syn::parse::{Parse, ParseStream};
+use syn::{parse_macro_input, FnArg, Ident, ItemFn, LitStr, Pat, PatType, Token};
 
-#[proc_macro_derive(TransactionDB)]
-pub fn transaction_derive_macro(input: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(input as DeriveInput);
-    let name = ast.ident;
-    let gen = quote! {
-        use crate::repositories::transaction::TransactionDB;
+#[allow(non_snake_case)]
+struct KeyValue {
+    key: Ident,
+    _eq: Token![=],
+    value: LitStr,
+}
 
-        impl TransactionDB for #name {
-            async fn begin(&self) -> Result<sqlx::Transaction<Postgres>, ErrorApp> {
-                let result = self.conn.begin().await;
-                if let Ok(tx) = result {
-                    return Ok(tx);
-                }
-                Err(ErrorApp::OtherErr(result.err().unwrap().to_string()))
-            }
+impl Parse for KeyValue {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(KeyValue {
+            key: input.parse()?,
+            _eq: input.parse()?,
+            value: input.parse()?,
+        })
+    }
+}
 
-            async fn commit<'a>(&self, tx: sqlx::Transaction<'a, Postgres>) -> Result<(), ErrorApp> {
-                match tx.commit().await {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(match err {
-                        Error::Database(err_db) => match err_db.kind() {
-                            ErrorKind::UniqueViolation => ErrorApp::DuplicateKey,
-                            _ => ErrorApp::OtherErr(err_db.to_string()),
-                        },
-                        _ => ErrorApp::OtherErr(err.to_string()),
-                    }),
-                }
-            }
+struct TransactionArgs {
+    pairs: Vec<KeyValue>,
+}
 
-            async fn rollback<'a>(&self, tx: sqlx::Transaction<'a, Postgres>) -> Result<(), ErrorApp> {
-                match tx.rollback().await {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(ErrorApp::OtherErr(err.to_string())),
-                }
+impl Parse for TransactionArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut pairs = Vec::new();
+
+        while !input.is_empty() {
+            pairs.push(input.parse()?);
+            if input.peek(Token![,]) {
+                let _: Token![,] = input.parse()?;
             }
         }
-    };
-    gen.into()
+
+        Ok(TransactionArgs {pairs})
+    }
 }
 
 #[proc_macro_attribute]
-pub fn transaction(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn transaction(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let tx_arg = parse_macro_input!(attr as TransactionArgs);
+    let mut db = Ident::new("db", proc_macro2::Span::call_site());
+    let mut tx = Ident::new("tx", proc_macro2::Span::call_site());
+    let mut is_tx = Ident::new("is_tx", proc_macro2::Span::call_site());
+    let mut propagation = String::from("REQUIRED");
+
+    if !tx_arg.pairs.is_empty() {
+        for pair in tx_arg.pairs {
+            let key = pair.key;
+            let value = pair.value.value();
+            match key.to_string().as_str() {
+                "txManager" => {
+                    if !value.eq("tx") {
+                        db = Ident::new(format!("db_{value}").as_str(), key.span());
+                        tx = Ident::new(format!("tx_{value}").as_str(), key.span());
+                        is_tx = Ident::new(format!("is_tx_{value}").as_str(), key.span());
+                    }
+                },
+                "propagation" => propagation = value,
+                _ => panic!("unknown attribute transaction"),
+            }
+        }
+    }
+
+
+
     let func = parse_macro_input!(input as ItemFn);
     let func_vis = &func.vis; // like pub
     let func_block = &func.block; // { some statement or expression here }
 
-    
+
     let func_decl = func.sig;
     let func_async = &func_decl.asyncness.unwrap();
     let func_name = &func_decl.ident; // function name
@@ -60,7 +83,7 @@ pub fn transaction(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // Extract parameter names and types
     let mut param_names = Vec::new();
     let mut param_types = Vec::new();
-    
+
     for input in func_inputs {
         if let FnArg::Typed(PatType { pat, ty, .. }) = input {
             if let Pat::Ident(pat_ident) = &**pat {
@@ -69,7 +92,7 @@ pub fn transaction(_attr: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
     }
-    
+
     let gen = quote! {
         #func_vis #func_async fn #func_name #func_generics(#func_inputs) #func_output #func_where_clause {
             use std::sync::Arc;
@@ -77,37 +100,45 @@ pub fn transaction(_attr: TokenStream, input: TokenStream) -> TokenStream {
             use crate::utils::context::{TxManager, TX_MANAGER};
             use log::info;
 
-            let tx_manager = TX_MANAGER.get();
-            let tx_result = tx_manager.db.begin().await;
-            if let  Err(err) = tx_result {
-                return Err(ErrorApp::OtherErr(err.to_string()));
-            }
+            let mut tx_manager = TX_MANAGER.get();
+            let is_tx = tx_manager.is_tx;
 
-            let tx_manager = TxManager {
-                db: tx_manager.db,
-                tx: Arc::new(Mutex::new(Some(tx_result.unwrap()))),
-                is_tx: false,
-            };
+            if (#propagation.eq("REQUIRED") && !is_tx) || #propagation.eq("REQUIRED_NEW") {
+                let tx_result = tx_manager.#db.begin().await;
+                if let  Err(err) = tx_result {
+                    return Err(ErrorApp::OtherErr(err.to_string()));
+                }
+
+                tx_manager = TxManager {
+                    db: tx_manager.db,
+                    tx: Default::default(),
+                    is_tx: false,
+                };
+                tx_manager.#tx = Arc::new(Mutex::new(Some(tx_result.unwrap())));
+                tx_manager.#is_tx = true;
+            }
             TX_MANAGER.scope(tx_manager, async {
                 let result = #func_block;
 
-                let tx_manager = TX_MANAGER.get();
-                let tx_opt = tx_manager.tx.lock().await.take();
-                if let None = tx_opt { 
-                    return Err(ErrorApp::OtherErr("tx not found when finished".to_string()));
-                }
-                let tx = tx_opt.unwrap();
-                if let Err(err) = result {
-                    if let Err(err_tx) = tx.rollback().await {
-                        return Err(ErrorApp::OtherErr(format!("{}: {}", err, err_tx)));
+                if (#propagation.eq("REQUIRED") && !is_tx) || #propagation.eq("REQUIRED_NEW") {
+                    let tx_manager = TX_MANAGER.get();
+                    let tx_opt = tx_manager.#tx.lock().await.take();
+                    if let None = tx_opt {
+                        return Err(ErrorApp::OtherErr("tx not found when finished".to_string()));
                     }
-                    return Err(err);
+                    let tx = tx_opt.unwrap();
+                    if let Err(err) = result {
+                        if let Err(err_tx) = tx.rollback().await {
+                            return Err(ErrorApp::OtherErr(format!("{}: {}", err, err_tx)));
+                        }
+                        return Err(err);
+                    }
+
+                    if let Err(err_tx) = tx.commit().await {
+                        return Err(ErrorApp::OtherErr(format!("{}", err_tx)));
+                    }
                 }
-    
-                if let Err(err_tx) = tx.commit().await {
-                    return Err(ErrorApp::OtherErr(format!("{}", err_tx)));
-                }
-                
+
                 result
             }).await
         }

@@ -2,7 +2,7 @@ use std::env;
 
 pub mod app;
 pub mod logging;
-pub mod pg_conn;
+pub mod db;
 pub mod rsa_crypt;
 pub mod setting;
 
